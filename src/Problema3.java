@@ -4,17 +4,22 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+//O
+
 
 public class Problema3 {
 	
-	private Set<Integer>[] adj;
+	private Set<Short>[] adj;
 	private int[] dineroPersonas;
-	private Set<Integer> personas;
+	private short[] personas;
 	
 	public static void main(String[] args) throws Exception {
 		Problema3 instancia = new Problema3();
@@ -42,10 +47,16 @@ public class Problema3 {
 				for (int j = 0; j<num; j++) {
 					line = br.readLine();
 					final String [] adjStr = line.split(" ");
-					final Set<Integer> set = new HashSet<>();
+					final Set<Short> set = new HashSet<>();
 					
 					// a cada persona se le resta 1 para que corresponda a los indices
-					Arrays.stream(adjStr).mapToInt(f->Integer.parseInt(f)-1).forEach(set::add);
+					Arrays.stream(adjStr)
+			        .mapToInt(f -> (Short.parseShort(f) - 1))
+			        .forEach(k -> {
+			            List<Short> list = new ArrayList<>();
+			            list.add((short) k);
+			            set.addAll(list);
+			        });
 					
 					// Añadirle a cada persona los que conoce
 					instancia.addAdj(j, set);
@@ -63,31 +74,37 @@ public class Problema3 {
 	
 	public void resolver() {
 		final Queue<Estado> colaPrioridad = new PriorityQueue<>();
+		
 		int dineroEstado = 0;
-		for (Integer persona : personas) {
+		final short[] Bvacio = Arrays.copyOf(personas, personas.length) ;
+		for (short persona : Bvacio) {
 			dineroEstado += dineroPersonas[persona];
+			
 		}
 		
-		Estado vacio = new Estado(new ArrayList<>(), new ArrayList<>(personas), 0, dineroEstado);
-        
+		final Estado vacio = new Estado(new short[0], Bvacio, 0, dineroEstado);
 		System.out.println("suc vacio " +dineroEstado);
 		colaPrioridad.add(vacio);
 		while (!colaPrioridad.isEmpty()) {
 			final Estado estado = colaPrioridad.poll();
 
             
-            if(estado.getB().isEmpty()) {
-	        	System.out.print( "RESULTADO {");
-	            estado.getA().forEach(elemento -> System.out.print((elemento+1) + ","));
-		        System.out.println("} Dinero: " + estado.getDinero() + " Num Personas " +estado.getA().size()+ " Tamano de la cola " +colaPrioridad.size());
+			if (estado.isBEmpty()) {
+		        System.out.print("RESULTADO {");
+		        for (short a : estado.getA()) {
+					System.out.print(a + ",");
+				}
+		        System.out.println("} Dinero: " + estado.getDinero() + " Num Personas " + estado.getA().length +
+		                " Tamaño de la cola " + colaPrioridad.size());
 		        break;
-	        }
-            
-            for (Estado hijo : sucs(estado)) {
-            	System.out.println( "Estado { Dinero: " + estado.getDinero() + " Num Personas " +estado.getA().size()+ " Tamano de la cola " +colaPrioridad.size());
-            	colaPrioridad.add(hijo);
-            	
-			}
+		    }
+		    for (Estado hijo : sucs(estado)) {
+			        System.out.println("Estado { Dinero: " + estado.getDinero() + " Num Personas " + estado.getA().length +
+			                " Tamaño de la cola " + colaPrioridad.size());
+			        colaPrioridad.add(hijo);
+		    	
+		    }
+		   
             	        
         }
 		
@@ -95,22 +112,30 @@ public class Problema3 {
 	
 	private ArrayList<Estado> sucs(Estado estado) {
 		final ArrayList<Estado> sucs = new ArrayList<>();
-		for (Integer num : estado.getB()) {
-			ArrayList<Integer> A = new ArrayList<>(estado.getA());
-			A.add(num);
+		for (short num : estado.getB()) {
+			short[] A = Arrays.copyOf(estado.getA(), estado.getA().length + 1);
+            A[estado.getA().length] = num;
 			
-			ArrayList<Integer> B = new ArrayList<>(estado.getB());
-			B.retainAll(adj[num]);
-			
-	
-			 int dineroB = 0;
-		        for (Integer elemento : B) {
-		        	dineroB += dineroPersonas[elemento];
-		        }
-			
-			Estado suc = new Estado(A, B, estado.getDineroA() + dineroPersonas[num], dineroB);
-			
-			sucs.add(suc);
+            ArrayList<Short> bArrayList = new ArrayList<>();
+            
+            for (short elemento : estado.getB()) {
+				if (adj[num].contains(elemento)) {
+					bArrayList.add(elemento);
+				}
+			}
+            
+            short[] B = new short[bArrayList.size()];
+		    int dineroB = 0;
+		    int i=0;
+	        for (short elemento : bArrayList) {
+                B[i]=elemento;
+	        	dineroB += dineroPersonas[elemento];
+	        	i++;
+
+            }
+
+						
+			sucs.add(new Estado(A, B, estado.getDineroA() + dineroPersonas[num], dineroB));
 			
 		}
 		
@@ -120,14 +145,14 @@ public class Problema3 {
 	
 	public void iniciarAdj (int num) {
 		this.adj = new HashSet[num];
-	    this.personas = new HashSet<>();
+	    this.personas = new short[num];
 	    
-	    for (int i = 0; i < num; i++) {
-	    	this.personas.add(i);
+	    for (short i = 0; i < num; i++) {
+	    	this.personas[i] = i;
         }
 	}
 	
-	public void addAdj (int i, Set<Integer> set) {
+	public void addAdj (int i, Set<Short> set) {
 		this.adj[i] = set;
 	}
 
@@ -144,43 +169,42 @@ public class Problema3 {
 
 // Cada estado de la busqueda
 class Estado implements Comparable<Estado> {
-	private ArrayList<Integer> A;
-	private ArrayList<Integer> B;
+	private short[] A;
+	private short[] B;
 	private int dineroA = 0;
 	private int dineroTotal = 0;
 	
-	public Estado(ArrayList<Integer> A, ArrayList<Integer> B, int dineroA, int dineroB) {
+	public Estado(short[] A, short[] B, int dineroA, int dineroB) {
 		this.A = A;
 		this.B = B;
 		this.dineroA = dineroA;
 		dineroTotal = dineroA + dineroB;
 	}
-	
-	public boolean isAEmpty() {
-		return A.isEmpty();
-
-	}
 
 	public boolean isBEmpty() {
-		return B.isEmpty();
+		return B.length == 0;
 	}
 	
 	public int getDinero() {
 		return dineroTotal;
 	}
 
-	public ArrayList<Integer> getB() {
-		return B;
-	}
+	public short[] getB() {
+        return B;
+    }
 	
 
 	public int getBSize() {
-		return B.size();
+		return B.length;
 	}
 	
-	public ArrayList<Integer> getA() {
+	public short[] getA() {
         return A;
     }
+	public Set<Short> getAset() {
+		Set<Short> setA =  IntStream.range(0, A.length).mapToObj(s -> A[s]).collect(Collectors.toSet());
+		return setA;
+	}
 	
 	
     public int getDineroA() {
@@ -194,7 +218,7 @@ class Estado implements Comparable<Estado> {
 
 	@Override
 	public int hashCode() {
-		return Objects.hash(A);
+		return Objects.hash(getAset());
 	}
 
 	@Override
@@ -206,7 +230,7 @@ class Estado implements Comparable<Estado> {
 		if (getClass() != obj.getClass())
 			return false;
 		Estado other = (Estado) obj;
-		return Objects.equals(A, other.A);
+		return Objects.equals(this.getAset(), other.getAset());
 	}
 
 
