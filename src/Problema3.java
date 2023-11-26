@@ -2,7 +2,10 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 import java.util.PriorityQueue;
 import java.util.Queue;
 import java.util.Set;
@@ -10,16 +13,17 @@ import java.util.Set;
 public class Problema3 {
 	
 	private Set<Integer>[] adj;
-	private int[] dinero;
+	private int[] dineroPersonas;
 	private Set<Integer> personas;
 	
 	public static void main(String[] args) throws Exception {
 		Problema3 instancia = new Problema3();
 		
-		try ( 
+
+
 			InputStreamReader is= new InputStreamReader(System.in);
 			BufferedReader br = new BufferedReader(is);
-		) { 
+		
 			String line = br.readLine();
 			int casos = Integer.parseInt(line);
 			line = br.readLine();
@@ -36,7 +40,6 @@ public class Problema3 {
 				instancia.iniciarAdj(num);
 		        
 				for (int j = 0; j<num; j++) {
-					System.out.println(j);
 					line = br.readLine();
 					final String [] adjStr = line.split(" ");
 					final Set<Integer> set = new HashSet<>();
@@ -51,9 +54,7 @@ public class Problema3 {
 				//Resolver el problema
 				instancia.resolver();
 				line = br.readLine();
-			}
-		is.close();
-		br.close();
+			
 		}
 		
 		
@@ -61,23 +62,33 @@ public class Problema3 {
 	}
 	
 	public void resolver() {
-		Queue<Estado> colaPrioridad = new PriorityQueue<>();
-		
-		int puntaje = 0;
+		final Queue<Estado> colaPrioridad = new PriorityQueue<>();
+		int dineroEstado = 0;
 		for (Integer persona : personas) {
-			puntaje += dinero[persona];
+			dineroEstado += dineroPersonas[persona];
 		}
 		
-		Estado vacio = new Estado(new HashSet<>(), new HashSet<>(personas), puntaje);
+		Estado vacio = new Estado(new ArrayList<>(), new ArrayList<>(personas), 0, dineroEstado);
         
-		System.out.println("suc vacio " +puntaje);
-		colaPrioridad.addAll(sucs(vacio));
+		System.out.println("suc vacio " +dineroEstado);
+		colaPrioridad.add(vacio);
 		while (!colaPrioridad.isEmpty()) {
-            Estado estado = colaPrioridad.poll();
-            System.out.print( "suc {");
-            estado.getA().forEach(elemento -> System.out.print((elemento+1) + ","));
-	        System.out.println("} Puntaje: " + estado.getPuntaje());
-	        colaPrioridad.addAll(sucs(estado));
+			final Estado estado = colaPrioridad.poll();
+
+            
+            if(estado.getB().isEmpty()) {
+	        	System.out.print( "RESULTADO {");
+	            estado.getA().forEach(elemento -> System.out.print((elemento+1) + ","));
+		        System.out.println("} Dinero: " + estado.getDinero() + " Num Personas " +estado.getA().size()+ " Tamano de la cola " +colaPrioridad.size());
+		        break;
+	        }
+            
+            for (Estado hijo : sucs(estado)) {
+            	System.out.println( "Estado { Dinero: " + estado.getDinero() + " Num Personas " +estado.getA().size()+ " Tamano de la cola " +colaPrioridad.size());
+            	colaPrioridad.add(hijo);
+            	
+			}
+            	        
         }
 		
 	}
@@ -85,27 +96,19 @@ public class Problema3 {
 	private ArrayList<Estado> sucs(Estado estado) {
 		final ArrayList<Estado> sucs = new ArrayList<>();
 		for (Integer num : estado.getB()) {
-			final Set<Integer> A;
-			final Set<Integer> B;
-			
-			if (estado.isAEmpty()) {
-				A = new HashSet<>();
-				B = adj[num];
-				
-			}else {
-				A = new HashSet<>(estado.getA());;
-				B = new HashSet<>(estado.getB());
-				B.retainAll(adj[num]);
-			}
-			
+			ArrayList<Integer> A = new ArrayList<>(estado.getA());
 			A.add(num);
 			
-	
-	        int puntaje[] = {0};
-			B.forEach(elemento -> puntaje[0] += dinero[elemento]);
-			A.forEach(elemento -> puntaje[0] += dinero[elemento]);
+			ArrayList<Integer> B = new ArrayList<>(estado.getB());
+			B.retainAll(adj[num]);
 			
-			final Estado suc = new Estado(A, B, puntaje[0]);
+	
+			 int dineroB = 0;
+		        for (Integer elemento : B) {
+		        	dineroB += dineroPersonas[elemento];
+		        }
+			
+			Estado suc = new Estado(A, B, estado.getDineroA() + dineroPersonas[num], dineroB);
 			
 			sucs.add(suc);
 			
@@ -129,10 +132,10 @@ public class Problema3 {
 	}
 
 	public int[] getDinero() {
-		return dinero;
+		return dineroPersonas;
 	}
 	public void setDinero(int[] dinero) {
-		this.dinero = dinero;
+		this.dineroPersonas = dinero;
 	}
 	
 
@@ -141,14 +144,16 @@ public class Problema3 {
 
 // Cada estado de la busqueda
 class Estado implements Comparable<Estado> {
-	private Set<Integer> A;
-	private Set<Integer> B;
-	private int puntaje = 0;
+	private ArrayList<Integer> A;
+	private ArrayList<Integer> B;
+	private int dineroA = 0;
+	private int dineroTotal = 0;
 	
-	public Estado(Set<Integer> A, Set<Integer> B, int puntaje) {
+	public Estado(ArrayList<Integer> A, ArrayList<Integer> B, int dineroA, int dineroB) {
 		this.A = A;
 		this.B = B;
-		this.puntaje = puntaje;
+		this.dineroA = dineroA;
+		dineroTotal = dineroA + dineroB;
 	}
 	
 	public boolean isAEmpty() {
@@ -159,17 +164,12 @@ class Estado implements Comparable<Estado> {
 	public boolean isBEmpty() {
 		return B.isEmpty();
 	}
-
-	public void addPersona(Integer nuevaPersona) {
-		this.A.add(nuevaPersona);
-	}
-
 	
-	public int getPuntaje() {
-		return puntaje;
+	public int getDinero() {
+		return dineroTotal;
 	}
 
-	public Set<Integer> getB() {
+	public ArrayList<Integer> getB() {
 		return B;
 	}
 	
@@ -178,13 +178,42 @@ class Estado implements Comparable<Estado> {
 		return B.size();
 	}
 	
-	public Set<Integer> getA() {
-		return A;
-	}
-	
-	
-    @Override
-    public int compareTo(Estado otro) {
-        return Integer.compare(otro.puntaje, this.puntaje);
+	public ArrayList<Integer> getA() {
+        return A;
     }
+	
+	
+    public int getDineroA() {
+		return dineroA;
+	}
+
+	@Override
+    public int compareTo(Estado otro) {
+        return Integer.compare(otro.getDinero(), this.getDinero());
+    }
+
+	@Override
+	public int hashCode() {
+		return Objects.hash(A);
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		Estado other = (Estado) obj;
+		return Objects.equals(A, other.A);
+	}
+
+
+	
+	
+
+	
+
+
 }

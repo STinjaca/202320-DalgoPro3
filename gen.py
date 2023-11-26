@@ -21,7 +21,7 @@ def write_input_to_file(test_cases, filename):
                 i+=1
 
 # Generate and save 100 test cases, each with 1000 people
-test_cases = generate_input(100, 100)
+test_cases = generate_input(1, 1000)
 write_input_to_file(test_cases, "P3.in")
 
 print("Input file 'P3.in' generated successfully.")
