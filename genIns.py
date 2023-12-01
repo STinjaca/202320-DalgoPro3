@@ -39,17 +39,3 @@ test_cases = generate_input(1, 10000, 0.01)
 write_input_to_file(test_cases, "P3.in")
 
 print("Input file 'P3.in' generated successfully.")
-
-"""array = []
-for i in 0..this
-  array.push(
-    		{ '_id':i,
-              'nombre':generate('Full Name'),
-              'documento':generate('NHS Number'),
-              'tipoDocumento':/(Cédula de Ciudadanía|Tarjeta de Identidad|Cédula de Extranjería|Pasaporte|Registro Civil)/.gen,
-              'correo':generate('Email Address')
-            }
-    		)
-end
-
-array"""
