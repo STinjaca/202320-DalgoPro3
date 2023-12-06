@@ -30,12 +30,11 @@ def write_input_to_file(test_cases, filename):
         for money, relationships in test_cases:
             file.write(f"{' '.join(map(str, money))}\n")
             for persona in relationships:
-                print(persona, list(relationships[persona]))
                 file.write(f"{' '.join(map(str, relationships[persona]))}\n")
 
 # Generate and save 100 test cases, each with 1000 people
 #generate_input(numero de casos, numero de personas en los casos, porcentaje en float de conocerce de 0 a 1)
-test_cases = generate_input(1, 10000, 0.01)
+test_cases = generate_input(1, 5, 0.01)
 write_input_to_file(test_cases, "P3.in")
 
 print("Input file 'P3.in' generated successfully.")

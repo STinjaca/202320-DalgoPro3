@@ -211,10 +211,16 @@ class Estado implements Comparable<Estado> {
 		return dineroA;
 	}
 
-	@Override
-    public int compareTo(Estado otro) {
-        return Integer.compare(otro.getDinero(), this.getDinero());
-    }
+    @Override
+	public int compareTo(Estado otro) {
+		if(otro.getDinero() < this.getDinero()) {
+			return -1;
+		} else if(otro.getDinero() > this.getDinero()) {
+			return 1;
+		}
+
+		return 0;
+	}
 
 	@Override
 	public int hashCode() {
